@@ -3,19 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
 <title>Impressão ZPL</title>
 <style id="pageStyle">@page { size: 50mm 25mm; margin: 0; }</style>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 820px; margin: 30px auto; padding: 0 16px; color: #222; }
   h2 { margin-bottom: 8px; }
   textarea { width: 100%; height: 260px; font-family: monospace; font-size: 13px; box-sizing: border-box; }
+  textarea.arrastando { border: 2px dashed #1a6b2f; background: #f3fbf5; }
   .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
   input[type=number] { width: 80px; }
   button { padding: 10px 22px; cursor: pointer; font-size: 15px; }
   #status { color: #555; margin-top: 10px; min-height: 1.2em; }
-  .tip { font-size: 12px; color: #777; margin-top: 16px; }
+  .info { font-size: 13px; color: #1a6b2f; margin-top: 4px; min-height: 1.2em; }
 
-  /* Área de impressão: oculta na tela */
   #printArea { display: none; }
 
   @media print {
@@ -30,7 +33,12 @@
 
 <h2>Impressão de etiqueta ZPL</h2>
 
-<textarea id="zpl" placeholder="Cole o código ZPL aqui"></textarea>
+<textarea id="zpl" placeholder="Cole o código ZPL aqui, arraste um arquivo .txt/.zpl ou use o botão Abrir arquivo"></textarea>
+
+<div class="row">
+  <button id="btnAbrir">Abrir arquivo</button>
+  <input type="file" id="arquivo" accept=".txt,.zpl,text/plain" hidden>
+</div>
 
 <div class="row">
   <label>Largura (mm) <input type="number" id="w" value="50" step="0.1" min="1"></label>
@@ -46,6 +54,7 @@
   <button id="btnPrint">Imprimir (Ctrl+Enter)</button>
 </div>
 
+<div id="info" class="info"></div>
 <div id="status"></div>
 
 <div id="printArea">
@@ -56,6 +65,7 @@
 const $ = id => document.getElementById(id);
 const zplEl = $('zpl');
 const statusEl = $('status');
+const infoEl = $('info');
 const img = $('labelImg');
 const pageStyle = $('pageStyle');
 
@@ -64,9 +74,42 @@ function setStatus(msg, isError = false) {
   statusEl.style.color = isError ? '#b00020' : '#555';
 }
 
+// Lê ^PW (largura) e ^LL (altura) do ZPL e converte pontos em mm
+function detectarTamanho(zpl) {
+  const pw = zpl.match(/\^PW(\d+)/);
+  const ll = zpl.match(/\^LL(\d+)/);
+  const dpmm = parseInt($('dpi').value, 10);
+  const resultado = {};
+  if (pw) resultado.w = Math.round((parseInt(pw[1], 10) / dpmm) * 10) / 10;
+  if (ll) resultado.h = Math.round((parseInt(ll[1], 10) / dpmm) * 10) / 10;
+  return resultado;
+}
+
+function aplicarTamanhoDetectado() {
+  const zpl = zplEl.value;
+  if (!zpl.trim()) { infoEl.textContent = ''; return; }
+
+  const { w, h } = detectarTamanho(zpl);
+  const partes = [];
+
+  if (w) { $('w').value = w; partes.push(`largura ${w} mm`); }
+  if (h) { $('h').value = h; partes.push(`altura ${h} mm`); }
+
+  infoEl.textContent = partes.length
+    ? `Tamanho detectado no ZPL: ${partes.join(' × ')}`
+    : 'Tamanho não encontrado no ZPL (^PW/^LL). Usando os valores dos campos.';
+}
+
+// Carrega o conteúdo de um arquivo (.txt ou .zpl) na caixa de texto
+async function carregarArquivo(file) {
+  zplEl.value = await file.text();
+  aplicarTamanhoDetectado();
+  setStatus(`Arquivo carregado: ${file.name}`);
+  zplEl.focus();
+}
+
 // Busca a etiqueta renderizada como PNG no Labelary
 async function renderZpl(zplRaw, w, h, dpmm) {
-  // Garante uma única etiqueta por impressão (troca o ^PQ de quantidade por 1)
   const zpl = zplRaw.replace(/\^PQ[^^~]*/g, '^PQ1,0,1,Y');
 
   const wIn = (w / 25.4).toFixed(4);
@@ -95,6 +138,8 @@ async function imprimir() {
   const zpl = zplEl.value.trim();
   if (!zpl) { setStatus('Cole o código ZPL primeiro.', true); return; }
 
+  aplicarTamanhoDetectado();
+
   const w = parseFloat($('w').value);
   const h = parseFloat($('h').value);
   if (!(w > 0 && h > 0)) { setStatus('Informe largura e altura válidas.', true); return; }
@@ -111,7 +156,6 @@ async function imprimir() {
     img.src = url;
     await img.decode();
 
-    // Tamanho da página de impressão igual ao da etiqueta
     pageStyle.textContent = `@page { size: ${w}mm ${h}mm; margin: 0; }`;
     img.style.width = `${w}mm`;
     img.style.height = `${h}mm`;
@@ -124,10 +168,41 @@ async function imprimir() {
   }
 }
 
+// Botão Abrir arquivo
+$('btnAbrir').addEventListener('click', () => $('arquivo').click());
+$('arquivo').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (file) await carregarArquivo(file);
+  e.target.value = '';
+});
+
+// Arrastar e soltar um arquivo na caixa de texto
+zplEl.addEventListener('dragover', e => { e.preventDefault(); zplEl.classList.add('arrastando'); });
+zplEl.addEventListener('dragleave', () => zplEl.classList.remove('arrastando'));
+zplEl.addEventListener('drop', async e => {
+  e.preventDefault();
+  zplEl.classList.remove('arrastando');
+  const file = e.dataTransfer.files[0];
+  if (file) await carregarArquivo(file);
+});
+
+// Quando o arquivo é aberto pelo sistema (duplo clique, com o app instalado)
+if ('launchQueue' in window) {
+  window.launchQueue.setConsumer(async params => {
+    if (!params.files || !params.files.length) return;
+    const file = await params.files[0].getFile();
+    await carregarArquivo(file);
+  });
+}
+
+// Ao colar o ZPL, detecta o tamanho automaticamente
+zplEl.addEventListener('input', aplicarTamanhoDetectado);
+
 // Depois de imprimir (ou cancelar), limpa o campo para o próximo código
 window.addEventListener('afterprint', () => {
   printing = false;
   zplEl.value = '';
+  infoEl.textContent = '';
   setStatus('Pronto. Cole o próximo código.');
   zplEl.focus();
 });
