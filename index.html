@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0a0e0c">
+<meta name="theme-color" content="#f4f7f5">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <title>ZPL // Impressão</title>
@@ -12,14 +12,15 @@
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
 
   :root {
-    --bg: #0a0e0c;
-    --panel: #0f1613;
-    --borda: #1d3a2b;
-    --verde: #39ff88;
-    --verde-dim: #1f9d55;
-    --texto: #c9f7dc;
-    --muted: #5c7a6a;
-    --erro: #ff4d6d;
+    --bg: #f4f7f5;
+    --panel: #ffffff;
+    --borda: #d3e0d8;
+    --verde: #12824a;
+    --verde-brilho: #1fae64;
+    --verde-claro: #e6f6ec;
+    --texto: #1c2b23;
+    --muted: #6b7f73;
+    --erro: #c81e4a;
   }
 
   * { box-sizing: border-box; }
@@ -30,8 +31,8 @@
     font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
     color: var(--texto);
     background:
-      radial-gradient(circle at 20% 0%, rgba(57,255,136,0.08), transparent 40%),
-      radial-gradient(circle at 90% 100%, rgba(57,255,136,0.05), transparent 40%),
+      radial-gradient(circle at 20% 0%, rgba(31,174,100,0.10), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(31,174,100,0.07), transparent 40%),
       var(--bg);
     padding: 32px 16px;
   }
@@ -45,11 +46,12 @@
   }
   h1 {
     margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 2px;
-    color: var(--verde); text-shadow: 0 0 12px rgba(57,255,136,0.5);
+    color: var(--verde);
   }
   h1 span { color: var(--muted); }
   .badge {
-    font-size: 11px; color: var(--verde); border: 1px solid var(--verde-dim);
+    font-size: 11px; color: var(--verde); border: 1px solid var(--verde-brilho);
+    background: var(--verde-claro);
     padding: 3px 8px; border-radius: 3px; letter-spacing: 1px;
   }
 
@@ -59,7 +61,7 @@
     border-radius: 6px;
     padding: 18px;
     margin-bottom: 16px;
-    box-shadow: 0 0 24px rgba(57,255,136,0.04) inset;
+    box-shadow: 0 1px 3px rgba(20,60,35,0.05);
   }
   .label-titulo {
     font-size: 11px; letter-spacing: 2px; color: var(--muted);
@@ -68,20 +70,19 @@
 
   textarea {
     width: 100%; height: 260px; resize: vertical;
-    background: #060906; color: var(--verde);
+    background: #fbfdfc; color: var(--texto);
     border: 1px solid var(--borda); border-radius: 4px;
     padding: 12px; font-family: inherit; font-size: 13px; line-height: 1.5;
     outline: none; transition: border-color .2s, box-shadow .2s;
   }
   textarea:focus {
-    border-color: var(--verde-dim);
-    box-shadow: 0 0 0 1px var(--verde-dim), 0 0 18px rgba(57,255,136,0.15);
+    border-color: var(--verde-brilho);
+    box-shadow: 0 0 0 3px rgba(31,174,100,0.15);
   }
   textarea::placeholder { color: var(--muted); }
   textarea.arrastando {
     border: 1px dashed var(--verde);
-    background: #08140e;
-    box-shadow: 0 0 24px rgba(57,255,136,0.25);
+    background: var(--verde-claro);
   }
 
   .row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
@@ -89,36 +90,42 @@
   label.campo { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
   input[type=number], select {
     margin-top: 6px; width: 96px;
-    background: #060906; color: var(--texto);
+    background: #fbfdfc; color: var(--texto);
     border: 1px solid var(--borda); border-radius: 4px;
     padding: 9px 10px; font-family: inherit; font-size: 14px; outline: none;
   }
   select { width: 130px; }
-  input[type=number]:focus, select:focus { border-color: var(--verde-dim); }
+  input[type=number]:focus, select:focus {
+    border-color: var(--verde-brilho);
+    box-shadow: 0 0 0 3px rgba(31,174,100,0.15);
+  }
 
   button {
     font-family: inherit; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
     padding: 10px 18px; border-radius: 4px; cursor: pointer;
-    border: 1px solid var(--verde-dim); background: transparent; color: var(--verde);
+    border: 1px solid var(--verde); background: #ffffff; color: var(--verde);
     transition: all .15s;
   }
   button:hover {
-    background: var(--verde); color: #04110a;
-    box-shadow: 0 0 18px rgba(57,255,136,0.5);
+    background: var(--verde-claro);
+    box-shadow: 0 0 0 3px rgba(31,174,100,0.15);
   }
   button.primario {
-    background: var(--verde); color: #04110a; border-color: var(--verde); font-weight: 600;
-    box-shadow: 0 0 16px rgba(57,255,136,0.35);
+    background: var(--verde); color: #ffffff; border-color: var(--verde); font-weight: 600;
+    box-shadow: 0 2px 8px rgba(18,130,74,0.25);
   }
-  button.primario:hover { background: #7dffb0; box-shadow: 0 0 26px rgba(57,255,136,0.7); }
+  button.primario:hover {
+    background: var(--verde-brilho); border-color: var(--verde-brilho); color: #ffffff;
+    box-shadow: 0 4px 14px rgba(31,174,100,0.35);
+  }
   button:disabled { opacity: .4; cursor: not-allowed; }
 
   .acoes { margin-left: auto; }
 
   #info { font-size: 12px; color: var(--verde); min-height: 1.2em; margin-top: 12px; }
-  #info::before { content: "> "; color: var(--verde-dim); }
+  #info::before { content: "> "; color: var(--verde-brilho); }
   #status { font-size: 12px; color: var(--muted); min-height: 1.2em; margin-top: 6px; }
-  #status::before { content: "$ "; color: var(--verde-dim); }
+  #status::before { content: "$ "; color: var(--verde-brilho); }
   #status.erro { color: var(--erro); }
   #status.erro::before { color: var(--erro); }
 
