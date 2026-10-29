@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Impressão ZPL</title>
-<style id="pageStyle">@page { size: 100mm 150mm; margin: 0; }</style>
+<style id="pageStyle">@page { size: 50mm 25mm; margin: 0; }</style>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 820px; margin: 30px auto; padding: 0 16px; color: #222; }
   h2 { margin-bottom: 8px; }
@@ -66,7 +66,7 @@ function setStatus(msg, isError = false) {
 
 // Busca a etiqueta renderizada como PNG no Labelary
 async function renderZpl(zplRaw, w, h, dpmm) {
-  // Garante uma única etiqueta por impressão (remove o ^PQ de quantidade)
+  // Garante uma única etiqueta por impressão (troca o ^PQ de quantidade por 1)
   const zpl = zplRaw.replace(/\^PQ[^^~]*/g, '^PQ1,0,1,Y');
 
   const wIn = (w / 25.4).toFixed(4);
@@ -75,7 +75,10 @@ async function renderZpl(zplRaw, w, h, dpmm) {
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Accept': 'image/png' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'image/png'
+    },
     body: zpl
   });
 
@@ -108,7 +111,7 @@ async function imprimir() {
     img.src = url;
     await img.decode();
 
-    // Define o tamanho da página de impressão igual à etiqueta
+    // Tamanho da página de impressão igual ao da etiqueta
     pageStyle.textContent = `@page { size: ${w}mm ${h}mm; margin: 0; }`;
     img.style.width = `${w}mm`;
     img.style.height = `${h}mm`;
@@ -121,7 +124,7 @@ async function imprimir() {
   }
 }
 
-// Depois de imprimir (ou cancelar), limpa e prepara para o próximo código
+// Depois de imprimir (ou cancelar), limpa o campo para o próximo código
 window.addEventListener('afterprint', () => {
   printing = false;
   zplEl.value = '';
